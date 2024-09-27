@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const { auth, JWT_SECRET } = require("./middleware");
@@ -15,10 +16,12 @@ app.post("/signup", async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  const hashedPassword = await bcrypt.hash(password, 2);
+
   await userModel.create({
     name: name,
     email: email,
-    password: password,
+    password: hashedPassword,
   });
 
   res.json({
@@ -32,10 +35,18 @@ app.post("/login", async (req, res) => {
 
   const currUser = await userModel.findOne({
     email: email,
-    password: password,
   });
 
-  if (currUser) {
+  if (!currUser) {
+    res.status(403).send({
+      message: "User does not exist in our database",
+    });
+    return;
+  }
+
+  const passwordMatch = await bcrypt.compare(password, currUser.password);
+
+  if (passwordMatch) {
     const token = jwt.sign(
       {
         userId: currUser._id.toString(),
@@ -83,5 +94,3 @@ app.get("/todos", auth, async (req, res) => {
 app.listen(3000, () => {
   console.log("Your app is up and successfully running on port 3000");
 });
-
-// 3xGKoltLUgvTQmeX
