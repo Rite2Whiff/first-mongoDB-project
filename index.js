@@ -91,6 +91,49 @@ app.get("/todos", auth, async (req, res) => {
   });
 });
 
+app.put("/todo-mark", auth, async (req, res) => {
+  const userId = req.userId;
+
+  const currTodo = await todoModel.findOne({
+    userId: userId,
+  });
+
+  if (!currTodo) {
+    res.send({
+      message: "Item not found",
+    });
+    return;
+  }
+
+  await todoModel.updateOne({
+    isDone: true,
+  });
+
+  res.send({
+    message: "Item updated sucessfully",
+  });
+});
+
+app.delete("/todo-delete", auth, async (req, res) => {
+  const userId = req.userId;
+  const currTodo = await todoModel.findOne({
+    userId: userId,
+  });
+
+  if (!currTodo) {
+    res.send({
+      message: "Item not found",
+    });
+    return;
+  }
+
+  await todoModel.deleteOne(currTodo);
+
+  res.send({
+    message: "Todo deleted successfully",
+  });
+});
+
 app.listen(3000, () => {
   console.log("Your app is up and successfully running on port 3000");
 });
